@@ -58,7 +58,7 @@ export default function LiveIshara() {
 
       // 3. FastAPI Server IP (Laptop's IPv4)
       // const SERVER_URL = 'http://192.168.100.18:8000/predict'; 
-      const SERVER_URL = 'https://isharaai-a-sign-language-translation-app.onrender.com'; 
+      const SERVER_URL = 'https://isharaai-a-sign-language-translation-app.onrender.com/predict';
 
       // 4. API Request
       const response = await fetch(SERVER_URL, {
