@@ -1,5 +1,9 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
+# =========================
+# React Native / Expo
+# =========================
+
 # dependencies
 node_modules/
 
@@ -9,7 +13,19 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# generated native folders
+/ios
+/android
+
+# Metro
+.metro-health-check*
+
+# debug logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Native / Android signing
 .kotlin/
 *.orig.*
 *.jks
@@ -18,26 +34,75 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
-# Metro
-.metro-health-check*
-
-# debug
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-
 # macOS
 .DS_Store
 *.pem
 
-# local env files
+# Environment files
+.env
+.env.*
+!.env.example
 .env*.local
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 
+# Example app
 app-example
 
-# generated native folders
-/ios
-/android
+# =========================
+# Python Backend
+# =========================
+
+# Virtual Environments
+venv/
+venv_final/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# =========================
+# ML Models (optional)
+# =========================
+
+# Uncomment if you DON'T want to upload models
+# *.pth
+# *.pt
+# *.onnx
+# *.h5
