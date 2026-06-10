@@ -7,43 +7,14 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { loadTensorflowModel } from 'react-native-fast-tflite';
 
 export default function LiveIshara() {
-  const [modelStatus, setModelStatus] = useState("Model Not Loaded");
-  const [isLoading, setIsLoading] = useState(false);
-  
-  // FIX 1: Explicitly type the state variables
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const cameraRef = useRef<CameraView | null>(null);
-  const [tfliteInstance, setTfliteInstance] = useState<any>(null);
   
-  const [detectionResult, setDetectionResult] = useState("Translation output placeholder");
-
-  const handleLoadModel = async () => {
-    setIsLoading(true);
-    setModelStatus("Loading native model...");
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // FIX 2: Tell ESLint that require() is necessary for React Native assets here
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      // To this:
-const coreModel = await loadTensorflowModel(require('../assets/model/sign_model.tflite'), ['default']);
-      
-      setTfliteInstance(coreModel);
-      setModelStatus("AI Ready to Detect");
-      setDetectionResult("Ready to scan.");
-
-    } catch (error) {
-      console.error("Error loading native model:", error);
-      setModelStatus("Failed to load model");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [detectionResult, setDetectionResult] = useState("Ready to scan.");
 
   useEffect(() => {
     (async () => {
@@ -63,19 +34,54 @@ const coreModel = await loadTensorflowModel(require('../assets/model/sign_model.
   const handleDetectFromCamera = async () => {
     if (!cameraRef.current) return;
     
-    // FIX 3: Temporarily using the variable to silence the ESLint warning 
-    // until we switch to VisionCamera
-    if (tfliteInstance) {
-        console.log("Model is ready for VisionCamera frames!");
-    }
-    
+    setIsDetecting(true);
     setDetectionResult("Taking picture...");
     
     try {
-      setDetectionResult("Warning: .tflite models need VisionCamera to process JPEGs.");
+      // 1. Photo Capture
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.5, base64: false });
+      if (!photo) {
+        setDetectionResult("Failed to capture photo.");
+        setIsDetecting(false);
+        return;
+      }
+
+      setDetectionResult("Sending to AI Server...");
+
+      // 2. Prepare Form Data
+      const formData = new FormData();
+      formData.append('file', {
+        uri: photo.uri,
+        name: 'sign_frame.jpg',
+        type: 'image/jpeg',
+      } as any);
+
+      // 3. FastAPI Server IP (Laptop's IPv4)
+      const SERVER_URL = 'http://192.168.100.18:8000/predict'; 
+
+      // 4. API Request
+      const response = await fetch(SERVER_URL, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const data = await response.json();
+      
+      // 5. Update UI with Prediction
+      if (data.prediction) {
+        setDetectionResult(`Detected: ${data.prediction}`);
+      } else {
+        setDetectionResult("Could not detect sign.");
+      }
+
     } catch (err) {
-      console.error(err);
-      setDetectionResult("Detection failed");
+      console.error("Server Connection Error:", err);
+      setDetectionResult("Network Error: Ensure Server is running & IP is correct");
+    } finally {
+      setIsDetecting(false);
     }
   };
 
@@ -94,26 +100,16 @@ const coreModel = await loadTensorflowModel(require('../assets/model/sign_model.
       )}
 
       <View style={styles.statusContainer}>
-        {isLoading && <ActivityIndicator size="small" color="#FFB400" style={{ marginRight: 8 }} />}
+        {isDetecting && <ActivityIndicator size="small" color="#FFB400" style={{ marginRight: 8 }} />}
         <Text
           style={[
             styles.statusText,
-            modelStatus === "AI Ready to Detect" ? styles.statusReady : styles.statusPending,
+            isDetecting ? styles.statusPending : styles.statusReady,
           ]}
         >
-          {modelStatus}
+          {isDetecting ? "Processing Frame..." : "AI Server Ready"}
         </Text>
       </View>
-
-      <TouchableOpacity
-        style={[styles.loadBtn, isLoading && styles.disabledBtn]}
-        onPress={handleLoadModel}
-        disabled={isLoading || modelStatus === "AI Ready to Detect"}
-      >
-        <Text style={styles.loadText}>
-          {modelStatus === "AI Ready to Detect" ? "Model Loaded" : "Load Model"}
-        </Text>
-      </TouchableOpacity>
 
       <TouchableOpacity style={styles.recordBtn} onPress={handleToggleCamera}>
         <Text style={styles.recordText}>
@@ -123,8 +119,12 @@ const coreModel = await loadTensorflowModel(require('../assets/model/sign_model.
 
       {cameraOpen && (
         <View style={{ alignItems: "center", marginBottom: 12 }}>
-          <TouchableOpacity style={[styles.loadBtn]} onPress={handleDetectFromCamera}>
-            <Text style={styles.loadText}>Detect</Text>
+          <TouchableOpacity 
+            style={[styles.loadBtn, isDetecting && styles.disabledBtn]} 
+            onPress={handleDetectFromCamera}
+            disabled={isDetecting}
+          >
+            <Text style={styles.loadText}>Detect Sign</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   statusText: { textAlign: "center", fontWeight: "600", fontSize: 16 },
   statusReady: { color: "#28a745" },
-  statusPending: { color: "#dc3545" },
+  statusPending: { color: "#FFB400" },
   loadBtn: { 
     alignSelf: "center", 
     backgroundColor: "#001F3F", 
@@ -195,5 +195,5 @@ const styles = StyleSheet.create({
     justifyContent: "center", 
     padding: 10 
   },
-  translationText: { color: "#444", textAlign: "center" },
+  translationText: { color: "#444", textAlign: "center", fontWeight: "bold", fontSize: 16 },
 });
