@@ -3,15 +3,23 @@
     "Aap",
     "Kese",
     "Salam",
+    "Samaat se Mahroom",
     "Theek hu",
-    "Theek nahi hu"
+    "Theek nahi hu",
+    "bhooke",
+    "bol sakte hein",
+    "khana"
   ],
-  "num_classes": 5,
+  "num_classes": 9,
   "sign_types": {
-    "Aap": "snapshot",
-    "Kese": "snapshot",
-    "Salam": "snapshot",
-    "Theek hu": "snapshot",
-    "Theek nahi hu": "snapshot"
+    "Aap": "temporal",
+    "Kese": "temporal",
+    "Salam": "temporal",
+    "Samaat se Mahroom": "temporal",
+    "Theek hu": "temporal",
+    "Theek nahi hu": "temporal",
+    "bhooke": "temporal",
+    "bol sakte hein": "temporal",
+    "khana": "temporal"
   }
 }
